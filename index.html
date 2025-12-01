@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Tienda online de productos para niños y niñas con carrito de compras fácil y rápido">
+    <title>Tienda Online - Productos para Niños</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">🛍️ Mi Tienda</h1>
+            <button class="cart-button-desktop" id="cartBtnDesktop">
+                🛒 Carrito
+                <span class="cart-badge" id="cartBadgeDesktop">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <section class="filters">
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="todas">Todas</button>
+            <button class="filter-btn" data-filter="niño">Niño</button>
+            <button class="filter-btn" data-filter="niña">Niña</button>
+        </div>
+    </section>
+
+    <!-- Products Grid -->
+    <main class="products-container">
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be dynamically inserted here -->
+        </div>
+    </main>
+
+    <!-- Mobile Cart Button -->
+    <button class="cart-button-mobile" id="cartBtnMobile">
+        🛒 Carrito
+        <span class="cart-badge" id="cartBadgeMobile">0</span>
+    </button>
+
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>🛒 Mi Carrito</h2>
+                <button class="close-cart" id="closeCart">&times;</button>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart" id="emptyCart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p>Tu carrito está vacío</p>
+                </div>
+            </div>
+
+            <div class="cart-summary" id="cartSummary" style="display: none;">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span class="cart-total-amount" id="cartTotal">$0</span>
+                </div>
+
+                <!-- Order Number (shown after sending) -->
+                <div class="order-number" id="orderNumber">
+                    <div class="order-number-label">Número de Orden</div>
+                    <div class="order-number-value" id="orderNumberValue"></div>
+                </div>
+
+                <!-- Success Alert -->
+                <div class="alert" id="successAlert">
+                    <p class="alert-text"></p>
+                </div>
+
+                <!-- Customer Form -->
+                <form class="customer-form" id="customerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">Nombre *</label>
+                            <input type="text" id="firstName" placeholder="Juan" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Apellido *</label>
+                            <input type="text" id="lastName" placeholder="Pérez" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Teléfono *</label>
+                        <input type="tel" id="phone" placeholder="1131095557" pattern="[0-9]*" inputmode="numeric"
+                            required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="street">Calle *</label>
+                            <input type="text" id="street" placeholder="Av. Corrientes" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="number">Altura *</label>
+                            <input type="text" id="number" placeholder="1234" pattern="[0-9]*" inputmode="numeric"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Localidad *</label>
+                            <input type="text" id="city" placeholder="Buenos Aires" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="zipCode">Código Postal *</label>
+                            <input type="text" id="zipCode" placeholder="1043" pattern="[0-9]*" inputmode="numeric"
+                                required>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Action Buttons -->
+                <div class="cart-actions">
+                    <div class="contact-buttons">
+                        <button class="whatsapp-btn" id="whatsappBtn" disabled>
+                            📱 Enviar a WhatsApp
+                        </button>
+                        <button class="email-btn" id="emailBtn" disabled>
+                            📧 Enviar por Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
