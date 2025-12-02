@@ -1,14 +1,25 @@
 # Cloud Build configuration for automated deployment
-# This file is optional but useful for CI/CD
+# Using Artifact Registry (recommended over deprecated GCR)
 
 steps:
+  # Create Artifact Registry repository if it doesn't exist
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud artifacts repositories create tienda-carrito \
+          --repository-format=docker \
+          --location=us-central1 \
+          --description="Docker repository for tienda-carrito" || true
+  
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/tienda-carrito:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA', '.']
   
-  # Push the container image to Container Registry
+  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/tienda-carrito:$COMMIT_SHA']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA']
   
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -18,7 +29,7 @@ steps:
       - 'deploy'
       - 'tienda-carrito'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/tienda-carrito:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -26,7 +37,7 @@ steps:
       - '--allow-unauthenticated'
 
 images:
-  - 'gcr.io/$PROJECT_ID/tienda-carrito:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
