@@ -301,10 +301,17 @@ function sendToWhatsApp() {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const firstName = document.getElementById('firstName').value;
     const lastName = document.getElementById('lastName').value;
+    const phone = document.getElementById('phone').value;
+    const street = document.getElementById('street').value;
+    const number = document.getElementById('number').value;
+    const city = document.getElementById('city').value;
+    const zipCode = document.getElementById('zipCode').value;
 
     let message = `Hola! Quiero realizar el siguiente pedido:\n\n`;
     message += `📋 Orden: ${orderNum}\n`;
     message += `👤 Cliente: ${firstName} ${lastName}\n\n`;
+    message += `📞 Teléfono: ${phone}\n`;
+    message += `📍 Dirección: ${street} ${number}, ${city}, ${zipCode}\n\n`;
     message += `🛒 Productos:\n`;
 
     cart.forEach(item => {

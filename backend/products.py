@@ -1,19 +1,19 @@
 products = [
     {
         "sku": 'NK-001',
-        "title": 'Zapatillas Deportivas',
-        "description": 'Zapatillas cómodas y resistentes para todo tipo de actividades',
+        "title": 'Ojotas de tibron',
+        "description": 'Ojotas grises con diseño de tibron',
         "price": 8500,
         "category": 'niño',
-        "image": 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=400&h=300&fit=crop'
+        "image": 'https://storage.cloud.google.com/img-web/sharki-1g.jpg.jpg'
     },
     {
         "sku": 'NK-002',
-        "title": 'Mochila Escolar',
-        "description": 'Mochila espaciosa con compartimentos organizadores',
+        "title": 'Sharki con luces',
+        "description": 'Sharki con luces y diseño de tibron',
         "price": 6200,
         "category": 'niño',
-        "image": 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop'
+        "image": 'https://storage.cloud.google.com/img-web/sharki-2g.jpg.jpg'
     },
     {
         "sku": 'NK-003',
@@ -84,6 +84,14 @@ products = [
         "title": 'Camiseta de Fútbol',
         "description": 'Camiseta transpirable para jugar al fútbol',
         "price": 4200,
+        "category": 'niño',
+        "image": 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&h=300&fit=crop'
+    },
+    {
+        "sku": 'NK-007',
+        "title": 'Camisa de algodon',
+        "description": 'hermosa camisa de algodon',
+        "price": 400,
         "category": 'niño',
         "image": 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&h=300&fit=crop'
     }
