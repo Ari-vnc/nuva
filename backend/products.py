@@ -1,5 +1,3 @@
-const BUCKET_URL = "https://storage.googleapis.com/img-tienda-nuva";
-
 products = [
     {
         "sku": 'NK-001',
@@ -7,7 +5,7 @@ products = [
         "description": 'Ojotas grises con diseño de tibron',
         "price": 8500,
         "category": 'niño',
-        "image": `${BUCKET_URL}/sharki-1g.jpg.avif`
+        "image": 'https://storage.cloud.google.com/img-web/sharki-1g.jpg.avif'
     },
     {
         "sku": 'NK-002',
@@ -15,7 +13,7 @@ products = [
         "description": 'Sharki con luces y diseño de tibron',
         "price": 6200,
         "category": 'niño',
-        "image": `${BUCKET_URL}/sharki-2g.jpg.avif`
+        "image": 'https://storage.cloud.google.com/img-web/sharki-2g.jpg.avif'
     },
     {
         "sku": 'NK-003',
@@ -98,17 +96,3 @@ products = [
         "image": 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&h=300&fit=crop'
     }
 ]
-
-// Función para optimizar carga de imágenes
-function optimizeImageLoading() {
-    // Precargar imágenes críticas
-    const criticalImages = [
-        `${BUCKET_URL}/sharki-1g.jpg.avif`,
-        `${BUCKET_URL}/sharki-2g.jpg.avif`
-    ];
-    
-    criticalImages.forEach(src => {
-        const img = new Image();
-        img.src = src;
-    });
-}
