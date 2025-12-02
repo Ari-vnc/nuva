@@ -1,10 +1,33 @@
 // Products Data
 let products = [];
+let appConfig = { whatsappNumber: '', contactEmail: '' };
+
+// Fetch application configuration
+async function fetchConfig() {
+    try {
+        const response = await fetch('/api/config');
+        if (!response.ok) throw new Error('Failed to fetch config');
+        appConfig = await response.json();
+    } catch (error) {
+        console.error('Error fetching config:', error);
+        // Use fallback values if API fails
+        appConfig = { whatsappNumber: '5491131095557', contactEmail: 'dagnerdev@gmail.com' };
+    }
+}
 
 async function fetchProducts() {
     try {
         const response = await fetch('/api/products');
-        products = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch products');
+
+        const data = await response.json();
+
+        // Validate response is an array
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid products data');
+        }
+
+        products = data;
 
         // Initialize product quantities
         products.forEach(product => {
@@ -102,34 +125,55 @@ cartModal.addEventListener('click', (e) => {
     }
 });
 
+// XSS Protection: Sanitize HTML content
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Functions
 function renderProducts() {
     const filteredProducts = currentFilter === 'todas'
         ? products
         : products.filter(p => p.category === currentFilter);
 
-    productsGrid.innerHTML = filteredProducts.map(product => `
-        <div class="product-card">
-            <img src="${product.image}" alt="${product.title}" class="product-image">
-            <div class="product-info">
-                <div class="product-sku">SKU: ${product.sku}</div>
-                <h3 class="product-title">${product.title}</h3>
-                <p class="product-description">${product.description}</p>
-                <span class="product-category">${product.category === 'niño' ? '👦 Niño' : '👧 Niña'}</span>
-                <div class="product-price">$${product.price.toLocaleString('es-AR')}</div>
-                
-                <div class="quantity-controls">
-                    <button class="quantity-btn" onclick="decrementQuantity('${product.sku}')">−</button>
-                    <div class="quantity-display" id="qty-${product.sku}">${productQuantities[product.sku]}</div>
-                    <button class="quantity-btn" onclick="incrementQuantity('${product.sku}')">+</button>
+    productsGrid.innerHTML = filteredProducts.map(product => {
+        // Sanitize all user-facing content
+        const safeSku = escapeHtml(product.sku);
+        const safeTitle = escapeHtml(product.title);
+        const safeDescription = escapeHtml(product.description);
+        const safeCategory = escapeHtml(product.category);
+        const safeImage = escapeHtml(product.image);
+        const safePrice = Number(product.price) || 0;
+
+        return `
+            <div class="product-card">
+                <img src="${safeImage}" alt="${safeTitle}" class="product-image">
+                <div class="product-info">
+                    <div class="product-sku">SKU: ${safeSku}</div>
+                    <h3 class="product-title">${safeTitle}</h3>
+                    <p class="product-description">${safeDescription}</p>
+                    <span class="product-category">${safeCategory === 'niño' ? '👦 Niño' : '👧 Niña'}</span>
+                    <div class="product-price">$${safePrice.toLocaleString('es-AR')}</div>
+                    
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="decrementQuantity('${safeSku}')">−</button>
+                        <div class="quantity-display" id="qty-${safeSku}">${productQuantities[product.sku]}</div>
+                        <button class="quantity-btn" onclick="incrementQuantity('${safeSku}')">+</button>
+                    </div>
+                    
+                    <button class="add-to-cart-btn" onclick="addToCart('${safeSku}')">
+                        🛒 Agregar al Carrito
+                    </button>
                 </div>
-                
-                <button class="add-to-cart-btn" onclick="addToCart('${product.sku}')">
-                    🛒 Agregar al Carrito
-                </button>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function incrementQuantity(sku) {
@@ -208,21 +252,30 @@ function renderCart() {
     emptyCart.style.display = 'none';
     cartSummary.style.display = 'block';
 
-    cartItems.innerHTML = cart.map(item => `
-        <div class="cart-item">
-            <img src="${item.image}" alt="${item.title}" class="cart-item-image">
-            <div class="cart-item-info">
-                <div class="cart-item-title">${item.title}</div>
-                <div class="cart-item-sku">SKU: ${item.sku}</div>
-                <div class="cart-item-price">$${item.price.toLocaleString('es-AR')} × ${item.quantity} = $${(item.price * item.quantity).toLocaleString('es-AR')}</div>
-                <div class="cart-item-controls">
-                    <button class="cart-item-qty-btn" onclick="decrementCartItem('${item.sku}')">−</button>
-                    <div class="cart-item-quantity">Cant: ${item.quantity}</div>
-                    <button class="cart-item-qty-btn" onclick="incrementCartItem('${item.sku}')">+</button>
+    cartItems.innerHTML = cart.map(item => {
+        // Sanitize cart item data
+        const safeTitle = escapeHtml(item.title);
+        const safeSku = escapeHtml(item.sku);
+        const safeImage = escapeHtml(item.image);
+        const safePrice = Number(item.price) || 0;
+        const safeQuantity = Number(item.quantity) || 0;
+
+        return `
+            <div class="cart-item">
+                <img src="${safeImage}" alt="${safeTitle}" class="cart-item-image">
+                <div class="cart-item-info">
+                    <div class="cart-item-title">${safeTitle}</div>
+                    <div class="cart-item-sku">SKU: ${safeSku}</div>
+                    <div class="cart-item-price">$${safePrice.toLocaleString('es-AR')} × ${safeQuantity} = $${(safePrice * safeQuantity).toLocaleString('es-AR')}</div>
+                    <div class="cart-item-controls">
+                        <button class="cart-item-qty-btn" onclick="decrementCartItem('${safeSku}')">−</button>
+                        <div class="cart-item-quantity">Cant: ${safeQuantity}</div>
+                        <button class="cart-item-qty-btn" onclick="incrementCartItem('${safeSku}')">+</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     cartTotal.textContent = `$${total.toLocaleString('es-AR')}`;
@@ -299,13 +352,15 @@ function sendToWhatsApp() {
     }
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const firstName = document.getElementById('firstName').value;
-    const lastName = document.getElementById('lastName').value;
-    const phone = document.getElementById('phone').value;
-    const street = document.getElementById('street').value;
-    const number = document.getElementById('number').value;
-    const city = document.getElementById('city').value;
-    const zipCode = document.getElementById('zipCode').value;
+
+    // Sanitize form inputs
+    const firstName = escapeHtml(document.getElementById('firstName').value.trim());
+    const lastName = escapeHtml(document.getElementById('lastName').value.trim());
+    const phone = escapeHtml(document.getElementById('phone').value.trim());
+    const street = escapeHtml(document.getElementById('street').value.trim());
+    const number = escapeHtml(document.getElementById('number').value.trim());
+    const city = escapeHtml(document.getElementById('city').value.trim());
+    const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
 
     let message = `Hola! Quiero realizar el siguiente pedido:\n\n`;
     message += `📋 Orden: ${orderNum}\n`;
@@ -315,7 +370,9 @@ function sendToWhatsApp() {
     message += `🛒 Productos:\n`;
 
     cart.forEach(item => {
-        message += `• ${item.title} (${item.sku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
+        const safeTitle = escapeHtml(item.title);
+        const safeSku = escapeHtml(item.sku);
+        message += `• ${safeTitle} (${safeSku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
     });
 
     message += `\n💰 Total: $${total.toLocaleString('es-AR')}`;
@@ -323,8 +380,8 @@ function sendToWhatsApp() {
     // Mark order as sent
     sentOrders.add(orderNum);
 
-    // Open WhatsApp (no console logs)
-    const whatsappUrl = `https://wa.me/5491131095557?text=${encodeURIComponent(message)}`;
+    // Open WhatsApp using config from backend
+    const whatsappUrl = `https://wa.me/${appConfig.whatsappNumber}?text=${encodeURIComponent(message)}`;
     const win = window.open(whatsappUrl, '_blank');
 
     if (win) {
@@ -355,13 +412,15 @@ function sendToEmail() {
     }
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const firstName = document.getElementById('firstName').value;
-    const lastName = document.getElementById('lastName').value;
-    const phone = document.getElementById('phone').value;
-    const street = document.getElementById('street').value;
-    const number = document.getElementById('number').value;
-    const city = document.getElementById('city').value;
-    const zipCode = document.getElementById('zipCode').value;
+
+    // Sanitize form inputs
+    const firstName = escapeHtml(document.getElementById('firstName').value.trim());
+    const lastName = escapeHtml(document.getElementById('lastName').value.trim());
+    const phone = escapeHtml(document.getElementById('phone').value.trim());
+    const street = escapeHtml(document.getElementById('street').value.trim());
+    const number = escapeHtml(document.getElementById('number').value.trim());
+    const city = escapeHtml(document.getElementById('city').value.trim());
+    const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
 
     let body = `Orden: ${orderNum}\n\n`;
     body += `DATOS DEL CLIENTE:\n`;
@@ -371,7 +430,9 @@ function sendToEmail() {
     body += `PRODUCTOS:\n`;
 
     cart.forEach(item => {
-        body += `${item.title} (${item.sku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
+        const safeTitle = escapeHtml(item.title);
+        const safeSku = escapeHtml(item.sku);
+        body += `${safeTitle} (${safeSku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
     });
 
     body += `\nTOTAL: $${total.toLocaleString('es-AR')}`;
@@ -380,7 +441,8 @@ function sendToEmail() {
     sentOrders.add(orderNum);
 
     const subject = `Nueva Orden - ${orderNum}`;
-    const mailtoUrl = `mailto:dagnerdev@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Use email from backend config
+    const mailtoUrl = `mailto:${appConfig.contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     // Open email client (no console logs)
     const win = window.open(mailtoUrl, '_blank');
@@ -461,5 +523,8 @@ style.textContent = `
 document.head.appendChild(style);
 
 // Initialize
-fetchProducts();
-validateForm();
+(async function init() {
+    await fetchConfig();
+    await fetchProducts();
+    validateForm();
+})();
