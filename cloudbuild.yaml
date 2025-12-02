@@ -2,17 +2,6 @@
 # Using Artifact Registry (recommended over deprecated GCR)
 
 steps:
-  # Create Artifact Registry repository if it doesn't exist
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        gcloud artifacts repositories create tienda-carrito \
-          --repository-format=docker \
-          --location=us-central1 \
-          --description="Docker repository for tienda-carrito" || true
-  
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA', '.']
