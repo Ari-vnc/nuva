@@ -35,6 +35,8 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--service-account'
+      - 'cuenta-dev-web@tienda-nuva.iam.gserviceaccount.com'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/tienda-carrito/tienda-carrito:$COMMIT_SHA'
