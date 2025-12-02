@@ -5,7 +5,7 @@ products = [
         "description": 'Ojotas grises con diseño de tibron',
         "price": 8500,
         "category": 'niño',
-        "image": 'https://storage.cloud.google.com/img-web/sharki-1g.jpg.jpg'
+        "image": 'https://storage.cloud.google.com/img-web/sharki-1g.jpg.avif'
     },
     {
         "sku": 'NK-002',
@@ -13,7 +13,7 @@ products = [
         "description": 'Sharki con luces y diseño de tibron',
         "price": 6200,
         "category": 'niño',
-        "image": 'https://storage.cloud.google.com/img-web/sharki-2g.jpg.jpg'
+        "image": 'https://storage.cloud.google.com/img-web/sharki-2g.jpg.avif'
     },
     {
         "sku": 'NK-003',
