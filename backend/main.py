@@ -52,7 +52,7 @@ async def add_security_headers(request: Request, call_next):
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "img-src 'self' data: https: blob:; "
+            "img-src 'self' data: http: https: blob:; "
             "font-src 'self' https://fonts.gstatic.com; "
             "connect-src 'self'; "
             "frame-ancestors 'none';"
@@ -87,6 +87,41 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 @app.get("/")
 async def read_index():
     return FileResponse('frontend/index.html')
+
+# Serve images from img directory
+@app.get("/img/{filename}")
+async def serve_image(filename: str):
+    """
+    Serve image files from the img directory with security validation
+    """
+    # Strict validation to prevent directory traversal
+    if not filename or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Whitelist allowed image extensions
+    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.avif'}
+    file_ext = Path(filename).suffix.lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Construct safe file path
+    img_dir = Path("frontend/img").resolve()
+    file_path = (img_dir / filename).resolve()
+    
+    # Ensure the resolved path is within img directory
+    try:
+        file_path.relative_to(img_dir)
+    except ValueError:
+        # Path is outside img directory
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check if file exists
+    if file_path.is_file():
+        return FileResponse(file_path)
+    
+    raise HTTPException(status_code=404, detail="File not found")
+
 
 # Serve other static files with improved security
 @app.get("/{filename}")
