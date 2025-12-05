@@ -45,7 +45,7 @@ products = [
         "sku": 'BSLG-0001',
         "title": 'Sandalia | Ojota pez linterna - gris',
         "description": 'Ilumina en 3 colores (rojo, azul y verde)',
-        "price": 7200,
+        "price": 15000,
         "category": 'niña',
         "image": '/img/bslg-0001.avif'
     }

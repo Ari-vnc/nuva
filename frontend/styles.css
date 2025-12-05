@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+
 :root {
     --primary: #6366f1;
     --primary-dark: #4f46e5;
@@ -71,13 +72,8 @@ body {
     align-items: center;
 }
 
-.logo {
-    font-size: 1.75rem;
-    font-weight: 700;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.logo-img {
+    width: 13rem;
 }
 
 .cart-button-desktop {
@@ -721,6 +717,7 @@ body {
 }
 
 @media (min-width: 768px) {
+
     .cart-button-mobile {
         display: none;
     }
@@ -737,6 +734,10 @@ body {
 }
 
 @media (max-width: 767px) {
+    .header-content {
+        flex-direction: column;
+    }
+
     .form-row {
         grid-template-columns: 1fr;
     }
