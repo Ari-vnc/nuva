@@ -15,7 +15,7 @@ class Settings:
     
     # Contact Information (moved from frontend)
     WHATSAPP_NUMBER: str = os.getenv("WHATSAPP_NUMBER", "5491131095557")
-    CONTACT_EMAIL: str = os.getenv("CONTACT_EMAIL", "dagnerdev@gmail.com")
+    CONTACT_EMAIL: str = os.getenv("CONTACT_EMAIL", "info@moncton.com.ar")
     
     # Security Headers
     ENABLE_SECURITY_HEADERS: bool = os.getenv("ENABLE_SECURITY_HEADERS", "true").lower() == "true"

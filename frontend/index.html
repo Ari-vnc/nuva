@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Tienda online de productos para niños y niñas">
     <title>Tienda Online - Productos para Niños</title>
+    <link rel="icon" type="image/avif" href="img/favico.avif">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -78,45 +79,71 @@
                 </div>
 
                 <!-- Customer Form -->
-                <form class="customer-form" id="customerForm">
+                <form class="customer-form" id="customerForm" autocomplete="on">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName">Nombre *</label>
-                            <input type="text" id="firstName" placeholder="Juan" required>
+                            <input type="text" id="firstName" name="firstName" placeholder="Juan"
+                                autocomplete="given-name" required>
                         </div>
                         <div class="form-group">
                             <label for="lastName">Apellido *</label>
-                            <input type="text" id="lastName" placeholder="Pérez" required>
+                            <input type="text" id="lastName" name="lastName" placeholder="Pérez"
+                                autocomplete="family-name" required>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="phone">Teléfono *</label>
-                        <input type="tel" id="phone" placeholder="1131095557" pattern="[0-9]*" inputmode="numeric"
-                            required>
+                        <input type="tel" id="phone" name="phone" placeholder="1131095557" pattern="[0-9]*"
+                            inputmode="numeric" autocomplete="tel" required>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="street">Calle *</label>
-                            <input type="text" id="street" placeholder="Av. Corrientes" required>
+                    <!-- Delivery Options -->
+                    <div class="delivery-options">
+                        <span class="delivery-label">Método de entrega *</span>
+                        <div class="delivery-option">
+                            <input type="radio" id="deliveryHome" name="deliveryMethod" value="home">
+                            <label for="deliveryHome">📦 Envío a domicilio</label>
                         </div>
-                        <div class="form-group">
-                            <label for="number">Altura *</label>
-                            <input type="text" id="number" placeholder="1234" pattern="[0-9]*" inputmode="numeric"
-                                required>
+                        <div class="delivery-option">
+                            <input type="radio" id="deliveryPickup" name="deliveryMethod" value="pickup">
+                            <label for="deliveryPickup">🏪 Retiro en sucursal, Floresta</label>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="city">Localidad *</label>
-                            <input type="text" id="city" placeholder="Buenos Aires" required>
+                    <!-- Address Fields (shown only when home delivery is selected) -->
+                    <div class="address-fields" id="addressFields" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="street">Calle *</label>
+                                <input type="text" id="street" name="street" placeholder="Av. Corrientes"
+                                    autocomplete="address-line1">
+                            </div>
+                            <div class="form-group">
+                                <label for="number">Altura *</label>
+                                <input type="text" id="number" name="number" placeholder="1234" pattern="[0-9]*"
+                                    inputmode="numeric" autocomplete="address-line2">
+                            </div>
                         </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">Localidad *</label>
+                                <input type="text" id="city" name="city" placeholder="CABA"
+                                    autocomplete="address-level2">
+                            </div>
+                            <div class="form-group">
+                                <label for="province">Provincia *</label>
+                                <input type="text" id="province" name="province" placeholder="Buenos Aires"
+                                    autocomplete="address-level1">
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="zipCode">Código Postal *</label>
-                            <input type="text" id="zipCode" placeholder="1043" pattern="[0-9]*" inputmode="numeric"
-                                required>
+                            <input type="text" id="zipCode" name="zipCode" placeholder="1043" pattern="[0-9]*"
+                                inputmode="numeric" autocomplete="postal-code">
                         </div>
                     </div>
                 </form>
@@ -135,6 +162,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <!-- Data Fiscal -->
+            <div class="footer-section footer-fiscal">
+                <a href="http://qr.afip.gob.ar/?qr=O_Go28aOgTQxnaj5X50iVg,," target="_F960AFIPInfo">
+                    <img src="http://www.afip.gob.ar/images/f960/DATAWEB.jpg" alt="Data Fiscal AFIP"
+                        class="data-fiscal-img">
+                </a>
+            </div>
+
+            <!-- Enlaces -->
+            <div class="footer-section footer-links">
+                <h4>Enlaces</h4>
+                <a href="#" class="footer-link disabled">Preguntas Frecuentes</a>
+                <a href="#" class="footer-link disabled">Términos y Condiciones</a>
+                <a href="#" class="footer-link disabled">Política de Privacidad</a>
+            </div>
+
+            <!-- Redes Sociales -->
+            <div class="footer-section footer-social">
+                <h4>Síguenos</h4>
+                <div class="social-icons">
+                    <a href="https://www.instagram.com/monctonstore/" target="_blank" class="social-icon"
+                        aria-label="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                    </a>
+                    <a href="https://www.tiktok.com/@monctonstore?is_from_webapp=1&sender_device=pc" target="_blank"
+                        class="social-icon" aria-label="TikTok">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Tienda Online. Todos los derechos reservados.</p>
+        </div>
+    </footer>
 
     <script src="app.js"></script>
 </body>

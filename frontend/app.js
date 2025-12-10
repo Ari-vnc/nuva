@@ -10,8 +10,8 @@ async function fetchConfig() {
         appConfig = await response.json();
     } catch (error) {
         console.error('Error fetching config:', error);
-        // Use fallback values if API fails
-        appConfig = { whatsappNumber: '5491131095557', contactEmail: 'dagnerdev@gmail.com' };
+        // No fallback values - config must come from backend
+        showNotification('❌ Error al cargar la configuración', 'error');
     }
 }
 
@@ -31,7 +31,7 @@ async function fetchProducts() {
 
         // Initialize product quantities
         products.forEach(product => {
-            productQuantities[product.sku] = 1;
+            productQuantities[product.sku] = 0;
         });
 
         renderProducts();
@@ -45,6 +45,7 @@ async function fetchProducts() {
 let cart = [];
 let currentFilter = 'todas';
 let productQuantities = {};
+let selectedSizes = {}; // Track selected size per SKU
 let sentOrders = new Set(); // Track sent orders to prevent duplicates
 
 // DOM Elements
@@ -106,7 +107,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
-// Form validation with numeric enforcement
+// Form validation with input enforcement
 const formInputs = customerForm.querySelectorAll('input');
 formInputs.forEach(input => {
     input.addEventListener('input', (e) => {
@@ -114,8 +115,49 @@ formInputs.forEach(input => {
         if (input.id === 'phone' || input.id === 'number' || input.id === 'zipCode') {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
+        // Enforce letters only for name fields (allow spaces, hyphens, accents)
+        if (input.id === 'firstName' || input.id === 'lastName') {
+            input.value = input.value.replace(/[0-9]/g, '');
+        }
         validateForm();
     });
+});
+
+// Delivery options handling
+const deliveryHomeRadio = document.getElementById('deliveryHome');
+const deliveryPickupRadio = document.getElementById('deliveryPickup');
+const addressFields = document.getElementById('addressFields');
+
+// Make entire delivery option div clickable
+document.querySelectorAll('.delivery-option').forEach(option => {
+    option.addEventListener('click', (e) => {
+        // Don't double-trigger if clicking on the radio itself
+        if (e.target.type !== 'radio') {
+            const radio = option.querySelector('input[type="radio"]');
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        }
+    });
+});
+
+deliveryHomeRadio.addEventListener('change', () => {
+    if (deliveryHomeRadio.checked) {
+        addressFields.style.display = 'block';
+    }
+    validateForm();
+});
+
+deliveryPickupRadio.addEventListener('change', () => {
+    if (deliveryPickupRadio.checked) {
+        addressFields.style.display = 'none';
+        // Clear address fields when switching to pickup
+        document.getElementById('street').value = '';
+        document.getElementById('number').value = '';
+        document.getElementById('city').value = '';
+        document.getElementById('province').value = '';
+        document.getElementById('zipCode').value = '';
+    }
+    validateForm();
 });
 
 // Close modal on outside click
@@ -140,16 +182,37 @@ function escapeHtml(unsafe) {
 function renderProducts() {
     const filteredProducts = currentFilter === 'todas'
         ? products
-        : products.filter(p => p.category === currentFilter);
+        : products.filter(p => {
+            // Support both string and array categories
+            if (Array.isArray(p.category)) {
+                return p.category.includes(currentFilter);
+            }
+            return p.category === currentFilter;
+        });
 
     productsGrid.innerHTML = filteredProducts.map(product => {
         // Sanitize all user-facing content
         const safeSku = escapeHtml(product.sku);
         const safeTitle = escapeHtml(product.title);
         const safeDescription = escapeHtml(product.description);
-        const safeCategory = escapeHtml(product.category);
         const safeImage = escapeHtml(product.image);
         const safePrice = Number(product.price) || 0;
+
+        // Build category display - support both string and array
+        const categories = Array.isArray(product.category) ? product.category : [product.category];
+        const categoryDisplay = categories.map(cat => {
+            if (cat === 'niño') return '👦 Niño';
+            if (cat === 'niña') return '👧 Niña';
+            return escapeHtml(cat);
+        }).join(' | ');
+
+        // Build size buttons if talles exist
+        const talles = product.talles || [];
+        const sizeButtons = talles.map(size => {
+            const safeSize = escapeHtml(size);
+            const isSelected = selectedSizes[product.sku] === size;
+            return `<button class="size-btn ${isSelected ? 'selected' : ''}" data-sku="${safeSku}" data-size="${safeSize}" onclick="selectSize('${safeSku}', '${safeSize}')">${safeSize}</button>`;
+        }).join('');
 
         return `
             <div class="product-card">
@@ -158,15 +221,14 @@ function renderProducts() {
                     <div class="product-sku">SKU: ${safeSku}</div>
                     <h3 class="product-title">${safeTitle}</h3>
                     <p class="product-description">${safeDescription}</p>
-                    <span class="product-category">${safeCategory === 'niño' ? '👦 Niño' : '👧 Niña'}</span>
+                    <span class="product-category">${categoryDisplay}</span>
                     <div class="product-price">$${safePrice.toLocaleString('es-AR')}</div>
-                    
+                    ${talles.length > 0 ? `<div class="size-selector"><span class="size-label">Talle:</span><div class="size-buttons">${sizeButtons}</div></div>` : ''}
                     <div class="quantity-controls">
                         <button class="quantity-btn" onclick="decrementQuantity('${safeSku}')">−</button>
                         <div class="quantity-display" id="qty-${safeSku}">${productQuantities[product.sku]}</div>
                         <button class="quantity-btn" onclick="incrementQuantity('${safeSku}')">+</button>
                     </div>
-                    
                     <button class="add-to-cart-btn" onclick="addToCart('${safeSku}')">
                         🛒 Agregar al Carrito
                     </button>
@@ -176,13 +238,36 @@ function renderProducts() {
     }).join('');
 }
 
+function selectSize(sku, size) {
+    // Toggle: if same size is clicked, deselect it
+    if (selectedSizes[sku] === size) {
+        delete selectedSizes[sku];
+    } else {
+        selectedSizes[sku] = size;
+    }
+    // Update only the size buttons for this SKU (no full re-render)
+    updateSizeButtons(sku);
+}
+
+function updateSizeButtons(sku) {
+    const buttons = document.querySelectorAll(`.size-btn[data-sku="${sku}"]`);
+    buttons.forEach(btn => {
+        const btnSize = btn.dataset.size;
+        if (selectedSizes[sku] === btnSize) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+}
+
 function incrementQuantity(sku) {
     productQuantities[sku]++;
     document.getElementById(`qty-${sku}`).textContent = productQuantities[sku];
 }
 
 function decrementQuantity(sku) {
-    if (productQuantities[sku] > 1) {
+    if (productQuantities[sku] > 0) {
         productQuantities[sku]--;
         document.getElementById(`qty-${sku}`).textContent = productQuantities[sku];
     }
@@ -191,29 +276,47 @@ function decrementQuantity(sku) {
 function addToCart(sku) {
     const product = products.find(p => p.sku === sku);
     const quantity = productQuantities[sku];
+    const selectedSize = selectedSizes[sku] || null;
 
-    const existingItem = cart.find(item => item.sku === sku);
+    // First validate quantity
+    if (quantity <= 0) {
+        showNotification('⚠️ Por favor agregue unidades del producto', 'error');
+        return;
+    }
+
+    // Then validate size if product has talles
+    if (product.talles && product.talles.length > 0 && !selectedSize) {
+        showNotification('⚠️ Por favor seleccione un talle', 'error');
+        return;
+    }
+
+    const existingItem = cart.find(item => item.sku === sku && item.size === selectedSize);
 
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
         cart.push({
             ...product,
-            quantity: quantity
+            quantity: quantity,
+            size: selectedSize
         });
     }
 
-    // Reset quantity to 1
-    productQuantities[sku] = 1;
-    document.getElementById(`qty-${sku}`).textContent = 1;
+    // Reset quantity to 0
+    productQuantities[sku] = 0;
+    document.getElementById(`qty-${sku}`).textContent = 0;
+
+    // Reset size selection and update UI without full re-render
+    delete selectedSizes[sku];
+    updateSizeButtons(sku);
 
     updateCartBadge();
     showNotification('✅ Producto agregado al carrito');
 }
 
 
-function incrementCartItem(sku) {
-    const item = cart.find(i => i.sku === sku);
+function incrementCartItem(index) {
+    const item = cart[index];
     if (item) {
         item.quantity++;
         updateCartBadge();
@@ -221,12 +324,12 @@ function incrementCartItem(sku) {
     }
 }
 
-function decrementCartItem(sku) {
-    const item = cart.find(i => i.sku === sku);
+function decrementCartItem(index) {
+    const item = cart[index];
     if (item) {
         item.quantity--;
         if (item.quantity === 0) {
-            cart = cart.filter(i => i.sku !== sku);
+            cart.splice(index, 1);
             showNotification('🗑️ Producto eliminado del carrito');
         }
         updateCartBadge();
@@ -252,13 +355,14 @@ function renderCart() {
     emptyCart.style.display = 'none';
     cartSummary.style.display = 'block';
 
-    cartItems.innerHTML = cart.map(item => {
+    cartItems.innerHTML = cart.map((item, index) => {
         // Sanitize cart item data
         const safeTitle = escapeHtml(item.title);
         const safeSku = escapeHtml(item.sku);
         const safeImage = escapeHtml(item.image);
         const safePrice = Number(item.price) || 0;
         const safeQuantity = Number(item.quantity) || 0;
+        const safeSize = item.size ? escapeHtml(item.size) : '';
 
         return `
             <div class="cart-item">
@@ -266,11 +370,12 @@ function renderCart() {
                 <div class="cart-item-info">
                     <div class="cart-item-title">${safeTitle}</div>
                     <div class="cart-item-sku">SKU: ${safeSku}</div>
+                    ${safeSize ? `<div class="cart-item-size">Talle: ${safeSize}</div>` : ''}
                     <div class="cart-item-price">$${safePrice.toLocaleString('es-AR')} × ${safeQuantity} = $${(safePrice * safeQuantity).toLocaleString('es-AR')}</div>
                     <div class="cart-item-controls">
-                        <button class="cart-item-qty-btn" onclick="decrementCartItem('${safeSku}')">−</button>
+                        <button class="cart-item-qty-btn" onclick="decrementCartItem(${index})">−</button>
                         <div class="cart-item-quantity">Cant: ${safeQuantity}</div>
-                        <button class="cart-item-qty-btn" onclick="incrementCartItem('${safeSku}')">+</button>
+                        <button class="cart-item-qty-btn" onclick="incrementCartItem(${index})">+</button>
                     </div>
                 </div>
             </div>
@@ -296,12 +401,24 @@ function validateForm() {
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
     const phone = document.getElementById('phone').value.trim();
-    const street = document.getElementById('street').value.trim();
-    const number = document.getElementById('number').value.trim();
-    const city = document.getElementById('city').value.trim();
-    const zipCode = document.getElementById('zipCode').value.trim();
 
-    const isValid = firstName && lastName && phone && street && number && city && zipCode;
+    // Check delivery method
+    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+    const hasDeliveryMethod = !!deliveryMethod;
+
+    // Base validation
+    let isValid = firstName && lastName && phone && hasDeliveryMethod;
+
+    // If home delivery is selected, validate address fields
+    if (deliveryMethod && deliveryMethod.value === 'home') {
+        const street = document.getElementById('street').value.trim();
+        const number = document.getElementById('number').value.trim();
+        const city = document.getElementById('city').value.trim();
+        const province = document.getElementById('province').value.trim();
+        const zipCode = document.getElementById('zipCode').value.trim();
+        isValid = isValid && street && number && city && province && zipCode;
+    }
+
     const hasCart = cart.length > 0;
 
     // Enable/disable buttons based on validation
@@ -316,10 +433,17 @@ function getMissingFields() {
     if (!document.getElementById('firstName').value.trim()) fields.push('Nombre');
     if (!document.getElementById('lastName').value.trim()) fields.push('Apellido');
     if (!document.getElementById('phone').value.trim()) fields.push('Teléfono');
-    if (!document.getElementById('street').value.trim()) fields.push('Calle');
-    if (!document.getElementById('number').value.trim()) fields.push('Altura');
-    if (!document.getElementById('city').value.trim()) fields.push('Localidad');
-    if (!document.getElementById('zipCode').value.trim()) fields.push('Código Postal');
+
+    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+    if (!deliveryMethod) {
+        fields.push('Método de entrega');
+    } else if (deliveryMethod.value === 'home') {
+        if (!document.getElementById('street').value.trim()) fields.push('Calle');
+        if (!document.getElementById('number').value.trim()) fields.push('Altura');
+        if (!document.getElementById('city').value.trim()) fields.push('Localidad');
+        if (!document.getElementById('province').value.trim()) fields.push('Provincia');
+        if (!document.getElementById('zipCode').value.trim()) fields.push('Código Postal');
+    }
     return fields;
 }
 
@@ -357,22 +481,36 @@ function sendToWhatsApp() {
     const firstName = escapeHtml(document.getElementById('firstName').value.trim());
     const lastName = escapeHtml(document.getElementById('lastName').value.trim());
     const phone = escapeHtml(document.getElementById('phone').value.trim());
-    const street = escapeHtml(document.getElementById('street').value.trim());
-    const number = escapeHtml(document.getElementById('number').value.trim());
-    const city = escapeHtml(document.getElementById('city').value.trim());
-    const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
+
+    // Get delivery method
+    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+    const isHomeDelivery = deliveryMethod && deliveryMethod.value === 'home';
 
     let message = `Hola! Quiero realizar el siguiente pedido:\n\n`;
     message += `📋 Orden: ${orderNum}\n`;
-    message += `👤 Cliente: ${firstName} ${lastName}\n\n`;
-    message += `📞 Teléfono: ${phone}\n`;
-    message += `📍 Dirección: ${street} ${number}, ${city}, ${zipCode}\n\n`;
+    message += `👤 Cliente: ${firstName} ${lastName}\n`;
+    message += `📞 Teléfono: ${phone}\n\n`;
+
+    // Delivery method
+    if (isHomeDelivery) {
+        const street = escapeHtml(document.getElementById('street').value.trim());
+        const number = escapeHtml(document.getElementById('number').value.trim());
+        const city = escapeHtml(document.getElementById('city').value.trim());
+        const province = escapeHtml(document.getElementById('province').value.trim());
+        const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
+        message += `� Método de entrega: Envío a domicilio\n`;
+        message += `� Dirección: ${street} ${number}, ${city}, ${province}, CP: ${zipCode}\n\n`;
+    } else {
+        message += `🏪 Método de entrega: Retiro en sucursal, Floresta\n\n`;
+    }
+
     message += `🛒 Productos:\n`;
 
     cart.forEach(item => {
         const safeTitle = escapeHtml(item.title);
         const safeSku = escapeHtml(item.sku);
-        message += `• ${safeTitle} (${safeSku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
+        const sizeInfo = item.size ? ` - Talle: ${escapeHtml(item.size)}` : '';
+        message += `• ${safeTitle} (${safeSku})${sizeInfo} - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
     });
 
     message += `\n💰 Total: $${total.toLocaleString('es-AR')}`;
@@ -417,22 +555,36 @@ function sendToEmail() {
     const firstName = escapeHtml(document.getElementById('firstName').value.trim());
     const lastName = escapeHtml(document.getElementById('lastName').value.trim());
     const phone = escapeHtml(document.getElementById('phone').value.trim());
-    const street = escapeHtml(document.getElementById('street').value.trim());
-    const number = escapeHtml(document.getElementById('number').value.trim());
-    const city = escapeHtml(document.getElementById('city').value.trim());
-    const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
+
+    // Get delivery method
+    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+    const isHomeDelivery = deliveryMethod && deliveryMethod.value === 'home';
 
     let body = `Orden: ${orderNum}\n\n`;
     body += `DATOS DEL CLIENTE:\n`;
     body += `Nombre: ${firstName} ${lastName}\n`;
-    body += `Teléfono: ${phone}\n`;
-    body += `Dirección: ${street} ${number}, ${city}, CP: ${zipCode}\n\n`;
+    body += `Teléfono: ${phone}\n\n`;
+
+    // Delivery method
+    if (isHomeDelivery) {
+        const street = escapeHtml(document.getElementById('street').value.trim());
+        const number = escapeHtml(document.getElementById('number').value.trim());
+        const city = escapeHtml(document.getElementById('city').value.trim());
+        const province = escapeHtml(document.getElementById('province').value.trim());
+        const zipCode = escapeHtml(document.getElementById('zipCode').value.trim());
+        body += `MÉTODO DE ENTREGA: Envío a domicilio\n`;
+        body += `Dirección: ${street} ${number}, ${city}, ${province}, CP: ${zipCode}\n\n`;
+    } else {
+        body += `MÉTODO DE ENTREGA: Retiro en sucursal, Floresta\n\n`;
+    }
+
     body += `PRODUCTOS:\n`;
 
     cart.forEach(item => {
         const safeTitle = escapeHtml(item.title);
         const safeSku = escapeHtml(item.sku);
-        body += `${safeTitle} (${safeSku}) - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
+        const sizeInfo = item.size ? ` - Talle: ${escapeHtml(item.size)}` : '';
+        body += `${safeTitle} (${safeSku})${sizeInfo} - Cantidad: ${item.quantity} - $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
     });
 
     body += `\nTOTAL: $${total.toLocaleString('es-AR')}`;
@@ -485,13 +637,17 @@ function showAlert(message, type = 'success') {
     }, type === 'error' ? 8000 : 5000);
 }
 
-function showNotification(message) {
+function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
+    // Use red gradient for error, green for success
+    const bgGradient = type === 'error'
+        ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+        : 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: ${bgGradient};
         color: white;
         padding: 1rem 1.5rem;
         border-radius: 0.75rem;
@@ -505,7 +661,7 @@ function showNotification(message) {
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in-out';
         setTimeout(() => notification.remove(), 300);
-    }, 2000);
+    }, type === 'error' ? 3000 : 2000);
 }
 
 // Add animation styles
